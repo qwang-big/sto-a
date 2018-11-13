@@ -30,7 +30,7 @@
     </style>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <script type="text/javascript" src="js/d3.v3.min.js"></script>
-    <script type="text/javascript" src="js/queue.v1.min.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
     <script type="text/javascript" src="js/ipo.js"></script>
   </head>
   <body>
@@ -46,6 +46,7 @@
     </div>
     <div id="chart" style="position:relative">
     </div>
+    <img src="images/loading.gif" id="loading" style="margin: auto; display: block"/>
  </div>
 <div id="tooltip" style="position:absolute; z-index:10; visibility:hidden; font-size:16px; background-color:#fff"></div>
 
@@ -370,10 +371,27 @@
 		d3.select('#save').attr("download", ar[0].symbol+".txt")
 	}
 
-	q = queue()
+	var requests = [];
 	for(var y=getIpo(); y<=new Date().getFullYear(); y++)
-		q.defer(d3.json, "/hs/kline/day/history/"+y+"/"+getId()+".json")
-	q.awaitAll(main)
+		requests.push($.ajax({url: "http://img1.money.126.net/data/hs/kline/day/history/"+y+"/"+getId()+".json",dataType: "jsonp"}));
+
+	var defer = $.when.apply($, requests);
+	defer.done(function(){
+		var day = [];
+		$.each(arguments, function(index, ar){
+			day = day.concat(ar[0].data)
+			document.title = ar[0].name + ar[0].symbol
+		});
+		for(var j in day) {
+			data.push({time: parseDate(day[j][0]), open:day[j][1], close:day[j][2], high:day[j][3], low:day[j][4], vol:day[j][5]})
+		}
+		data2 = data.slice(0,len)
+		plot(i, data2)
+		plot2(i, data.slice(slcI()[0],slcI()[1]), data2)
+		d3.select('#prev').property("disabled",true)
+		d3.select('#save').attr("download", id+".txt")
+		d3.select("#loading").style("display", "none")
+	});
     </script>
   </body>
 </html>
