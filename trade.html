@@ -68,7 +68,7 @@
 	}
 	var width = 1350;
 	var height =500;
-	var i = 0, amount = 0, len = 50;
+	var i = 0, N = 3, amount = 0, len = 50;
 	var margin = {top:0, bottom:50, left:50, right:50};
 	var tooltip = d3.select("#tooltip");
 	var data = [], entry = [];
@@ -166,7 +166,7 @@
 		return str
 	}
 	function sliceI(i,n) {
-		return [i>3 ? (i-3)*len : 0, n>(i+4)*len ? (i+4)*len : n]
+		return [i>N ? (i-N)*len : 0, n>(i+N+1)*len ? (i+N+1)*len : n]
 	}
 	function slcI() {return sliceI(i,data.length)}
       function plotI(a) {
@@ -341,7 +341,7 @@
           .attr("stroke", "#f00")
           .style("stroke-width",2)
           .attr("d", line)
-          .attr("transform", "translate("+i*w2*len/data.length+",0)");
+          .attr("transform", "translate("+w2*(i>N ? N : i)*len/data.length+",0)");
 
         chart2.append("g")
           .attr("class", "axis axis--x")

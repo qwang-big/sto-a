@@ -1,41 +1,26 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <style type="text/css">
-      .axis {
-        font: 10px sans-serif;
-      }
-      .axis-title {
-        text-anchor: end;
-      }
-      .axis path,
-      .axis line {
-        fill: none;
-        stroke: #000;
-        shape-rendering: crispEdges;
-      }
-      .axis--x path {
-        display: none;
-      }
-      .axis--y .tick:not(.tick--one) line {
-        stroke-opacity: .15;
-      }
-      .line {
-        fill: none;
-        stroke: steelblue;
-        stroke-width: 1.5px;
-        stroke-linejoin: round;
-        stroke-linecap: round;
-      }
-    </style>
-    <link rel="stylesheet" href="css/bootstrap.min.css">
     <script type="text/javascript" src="js/d3.v3.min.js"></script>
+    <script type="text/javascript" src="js/aname.js"></script>
+    <script type="text/javascript" src="js/bk.js"></script>
     <script type="text/javascript" src="js/ipo.js"></script>
-    <script type="text/javascript">
-    </script>
   </head>
   <body>
-	<div id="content">
-	</div>
+    <div id="content">
+    </div>
+    <script type="text/javascript">
+var bkn = Object.keys(bk)
+for(var i in bk) {
+	p = d3.select("#content").append("div")
+	p.append("h3").text(i)
+	p.selectAll(".item")
+	.data(bk[i])
+	.enter().append("a")
+	.attr("class", "item")
+	.attr("href", function(d){return "trade.html?id="+d+"&ipo="+ipodates[d]})
+	.text(function(d){return aname[d]})
+}
+    </script>
   </body>
 </html>
