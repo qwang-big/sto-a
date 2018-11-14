@@ -373,7 +373,7 @@
 
 	var requests = [];
 	for(var y=getIpo(); y<=new Date().getFullYear(); y++)
-		requests.push($.ajax({url: "http://img1.money.126.net/data/hs/kline/day/history/"+y+"/"+getId()+".json",dataType: "jsonp"}));
+		requests.push($.ajax({url: "https://img1.money.126.net/data/hs/kline/day/history/"+y+"/"+getId()+".json",dataType: "jsonp"}));
 
 	var defer = $.when.apply($, requests);
 	defer.done(function(){
