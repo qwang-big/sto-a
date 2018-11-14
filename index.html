@@ -1,26 +1,47 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
     <script type="text/javascript" src="js/d3.v3.min.js"></script>
-    <script type="text/javascript" src="js/aname.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/aname.js" charset="utf-8"></script>
     <script type="text/javascript" src="js/bk.js"></script>
     <script type="text/javascript" src="js/ipo.js"></script>
   </head>
   <body>
-    <div id="content">
+  <div class="container">
+    <div class="panel-group" id="accordion">
     </div>
+  </div>
     <script type="text/javascript">
-var bkn = Object.keys(bk)
-for(var i in bk) {
-	p = d3.select("#content").append("div")
-	p.append("h3").text(i)
-	p.selectAll(".item")
-	.data(bk[i])
-	.enter().append("a")
-	.attr("class", "item")
-	.attr("href", function(d){return "trade.html?id="+d+"&ipo="+ipodates[d]})
-	.text(function(d){return aname[d]})
-}
+	function getIpo(id) {
+		if (!ipodates.hasOwnProperty(id)) return 2018;
+		return ipodates[id]
+	}
+	var j = 0;
+	for(var i in bk) {
+		p = d3.select("#accordion").append("div").attr("class", "panel panel-default")
+		p.append("div").attr("class", "panel-heading")
+		.append("h4").attr("class", "panel-title")
+		.append("a").attr("data-toggle", "collapse")
+		.attr("data-parent", "#accordion")
+		.attr("aria-expanded", "false")
+		.attr("href", "#collapse"+(++j)).text(i)
+		p.append("div").attr("class", "panel-collapse collapse")
+		.attr("id", "collapse"+j)
+		.attr("aria-expanded", "false")
+		.append("div").attr("class", "panel-body")
+		.selectAll(".item")
+		.data(bk[i])
+		.enter().append("a")
+		.attr("class", "item")
+		.style("margin-right", "5px")
+		.attr("href", function(d){return "trade.html?id="+d+"&ipo="+getIpo(d)})
+		.text(function(d){return aname[d]})
+	}
     </script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
   </body>
 </html>
+
