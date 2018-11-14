@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>click</title>
     <style type="text/css">
       .axis {
         font: 10px sans-serif;
@@ -35,12 +37,14 @@
   </head>
   <body>
 <div>
-      <input id="prev" type="button" class="btn btn-primary btn-sm" value="" onclick="plotI(-1)">
-      <input id="next" type="button" class="btn btn-primary btn-sm" value="" onclick="plotI(1)">
+      <input id="prev" type="button" class="btn btn-primary btn-sm" value="<" onclick="plotI(-1)">
+      <input id="next" type="button" class="btn btn-primary btn-sm" value=">" onclick="plotI(1)">
       <input id="amount" type="text" value="">
       <input id="annot" type="hidden" value="">
       <input id="cancel" type="button" class="btn btn-primary btn-sm" value="c" onclick="cancel()" disabled>
-      <a id="save">save</a>
+      <input id="file" type="file" onchange="loadFile()" style="display:none;" />
+      <input id="load" type="button" class="btn btn-primary btn-sm" value="load" onclick="$('#file').click()">
+      <a id="save" onclick='if (entry.length>0) window.onbeforeunload = null'>save</a>
       <a href="index.html" class="btn btn-primary btn-sm">back</a>
     <div id="chart2">
     </div>
@@ -68,7 +72,7 @@
 	    return qmap;
 	}
 	var width = 1350;
-	var height =500;
+	var height =450;
 	var i = 0, N = 3, amount = 0, len = 50;
 	var margin = {top:0, bottom:50, left:50, right:50};
 	var tooltip = d3.select("#tooltip");
@@ -76,6 +80,23 @@
 	var curTime = new Date().getTime();
 	var params = getParameterMap();
 	var bfill = "red", sfill = "green";
+	var reader = new FileReader();  
+
+	function loadFile() {
+		var file = document.querySelector('input[type=file]').files[0];      
+		reader.addEventListener("load", parseFile, false);
+		if (file) reader.readAsText(file)
+	}
+
+	function parseFile(){
+		var data = d3.csv.parse(reader.result, function(d){
+			if (d.hasOwnProperty("date")) {
+				addEntry({time: parseDate(d.date), action: d.action});
+			} else return alert("Wrong file format");
+		});
+		plotI(0);
+		$("#file").val("")
+	}
 
       function getId() {
 		if (!params.hasOwnProperty('id')) return "1000001";
@@ -137,8 +158,9 @@
 		d3.select('#amount').property("value",amount);
 		updateEntry()
 	}
-	function findEntryFill(d) {
+	function findEntryFill(d,i) {
 		fd = findEntry(d)
+		if (fd != undefined) fd.i = i
 		return fd == undefined ? "#000" : (fd.action.indexOf("S")>=0 ? sfill : bfill)
 	}
 	function hasEntry(d) {
@@ -146,7 +168,7 @@
 	}
 	function findEntry(d) {
 		for(var j in entry) {
-			if (entry[j].time == d.time)
+			if (entry[j].time.getTime() == d.time.getTime())
 				return entry[j]
 		}
 		return undefined
@@ -160,7 +182,7 @@
 		d3.select('#save').attr("href", entry.length==0 ? null : window.URL.createObjectURL(new Blob([saveEntry()], {type: 'text/plain'})))
 	}
 	function saveEntry() {
-		str = ""
+		str = "date,action\r\n"
 		for(var j in entry) {
 			str += strDate(entry[j].time)+","+entry[j].action+"\r\n"
 		}
@@ -255,6 +277,16 @@
           .enter().append("g")
           .attr("class", "bar");
 
+        bar.append("svg:line")
+          .on('click', function(d,i) {click(d,i)})
+          .on('dblclick', function(d,i) {dblclick(d,i)})
+          .on('contextmenu', function(d,i) {rclick(d,i)})
+          .attr("x1", function(d) { return x(d.time)})
+          .attr("x2", function(d) { return x(d.time) + 0.5 * (width - margin.left - margin.right)/data.length})      
+          .attr("y1", function(d) { return y(d.close)})
+          .attr("y2", function(d) { return y(d.close)})
+          .style("stroke","#000");
+
         bar.append("svg:rect")
           .on('click', function(d,i) {click(d,i)})
           .on('dblclick', function(d,i) {dblclick(d,i)})
@@ -263,7 +295,8 @@
           .attr("y", function(d) {return y(max(d.open, d.close))})      
           .attr("height", function(d) { return y(min(d.open, d.close))-y(max(d.open, d.close))})
           .attr("width", function(d) { return 0.5 * (width - margin.left - margin.right)/data.length})
-          .attr("fill",function(d) { return d.open > d.close ? sfill : bfill});
+          .attr("fill",function(d) { return d.open > d.close ? sfill : bfill})
+          .style("stroke",function(d) { return d.open > d.close ? sfill : bfill});
 
         bar.append("svg:rect")
           .on('click', function(d,i) {click(d,i)})
@@ -274,7 +307,7 @@
           .attr("y", margin.top)
           .attr("height", height - margin.top - margin.bottom)
           .attr("width", function(d) { return 0.5 * (width - margin.left - margin.right)/data.length})
-          .attr("fill", function(d) {return findEntryFill(d)})
+          .attr("fill", function(d,i) {return findEntryFill(d,i)})
           .attr("fill-opacity", function(d) {return hasEntry(d) ? 0.2 : 0})
           .style("stroke","#000")
           .style("stroke-width",2)
@@ -356,21 +389,6 @@
             .tickValues(d3.scale.linear().domain(y2.domain()).ticks(5)))
         }
 
-	function main(error, ar) {
-		var day = [];
-		document.title = ar[0].name + ar[0].symbol
-		for(var j in ar)
-			day = day.concat(ar[j].data)
-		for(var j in day) {
-			data.push({time: parseDate(day[j][0]), open:day[j][1], close:day[j][2], high:day[j][3], low:day[j][4], vol:day[j][5]})
-		}
-		data2 = data.slice(0,len)
-		plot(i, data2)
-		plot2(i, data.slice(slcI()[0],slcI()[1]), data2)
-		d3.select('#prev').property("disabled",true)
-		d3.select('#save').attr("download", ar[0].symbol+".txt")
-	}
-
 	var requests = [];
 	for(var y=getIpo(); y<=new Date().getFullYear(); y++)
 		requests.push($.ajax({url: "https://img1.money.126.net/data/hs/kline/day/history/"+y+"/"+getId()+".json",dataType: "jsonp"}));
@@ -379,8 +397,12 @@
 	defer.done(function(){
 		var day = [];
 		$.each(arguments, function(index, ar){
-			day = day.concat(ar[0].data)
-			document.title = ar[0].name + ar[0].symbol
+			if (Array.isArray(ar) && ar[0].hasOwnProperty('data'))
+				ar = ar[0]
+			if (ar.hasOwnProperty('data')) {
+				day = day.concat(ar.data)
+				document.title = ar.name + ar.symbol
+			}
 		});
 		for(var j in day) {
 			data.push({time: parseDate(day[j][0]), open:day[j][1], close:day[j][2], high:day[j][3], low:day[j][4], vol:day[j][5]})
@@ -392,6 +414,7 @@
 		d3.select('#save').attr("download", id+".txt")
 		d3.select("#loading").style("display", "none")
 	});
+	window.onbeforeunload = function() {return "Please save first"}
     </script>
   </body>
 </html>
