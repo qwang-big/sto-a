@@ -180,6 +180,7 @@
 	function updateEntry() {
 		d3.select('#cancel').property("disabled", entry.length==0)
 		d3.select('#save').attr("href", entry.length==0 ? null : window.URL.createObjectURL(new Blob([saveEntry()], {type: 'text/plain'})))
+		window.onbeforeunload = function() {return "Please save first"}
 	}
 	function saveEntry() {
 		str = "date,action\r\n"
@@ -414,7 +415,6 @@
 		d3.select('#save').attr("download", id+".txt")
 		d3.select("#loading").style("display", "none")
 	});
-	window.onbeforeunload = function() {return "Please save first"}
     </script>
   </body>
 </html>
