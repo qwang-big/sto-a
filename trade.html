@@ -76,7 +76,7 @@
 	var i = 0, N = 3, amount = 0, len = 50;
 	var margin = {top:0, bottom:50, left:50, right:50};
 	var tooltip = d3.select("#tooltip");
-	var data = [], entry = [];
+	var data = [], entry = [], cq = [];
 	var curTime = new Date().getTime();
 	var params = getParameterMap();
 	var bfill = "red", sfill = "green";
@@ -118,6 +118,8 @@
 		return ""+d.getFullYear()+(m<10?"0"+m:m)+(dd<10?"0"+dd:dd)
 	}
       function parseDate(str) {
+		  if(str.indexOf("-")>0)
+			  return new Date(parseInt(str.substr(0,4)), parseInt(str.substr(5,2))-1, parseInt(str.substr(8,2)));
 		return new Date(parseInt(str.substr(0,4)), parseInt(str.substr(4,2))-1, parseInt(str.substr(6,2)))
 	}
       function jump() {
@@ -189,8 +191,24 @@
 		}
 		return str
 	}
-	function sliceI(i,n) {
-		return [i>N ? (i-N)*len : 0, n>(i+N+1)*len ? (i+N+1)*len : n]
+	function findcq(d) {
+		for(var j in cq) {
+			if (cq[j].date.getTime() == d.time.getTime())
+				return cq[j]
+		}
+		return undefined
+	}
+	function hascq(d) {
+		return findcq(d) != undefined
+	}
+	function showcq(d) {
+		var q = findcq(d);
+		if (!q) return;
+		tooltip.html(q.plan);
+		return tooltip.style("visibility", "visible")
+	}
+	function sliceI(j,n) {
+		return [j>N ? (j-N)*len : 0, n>(j+N+1)*len ? (j+N+1)*len : n]
 	}
 	function slcI() {return sliceI(i,data.length)}
       function plotI(a) {
@@ -313,6 +331,15 @@
           .style("stroke","#000")
           .style("stroke-width",2)
           .style("stroke-opacity",0);
+		
+        bar.append("svg:path")
+          .attr('d', d3.svg.symbol().type('triangle-up').size(100))
+          .on('mouseover', showcq)
+          .on('mousemove', function(){return tooltip.style("top", (d3.event.pageY-10)+"px").style("left",(d3.event.pageX+10)+"px")})
+		  .on("mouseout", function(){return tooltip.style("visibility", "hidden")})
+          .attr("transform", function(d){return 'translate('+(x(d.time)+0.25*(width-margin.left-margin.right)/data.length)+','+(height-margin.top-margin.bottom+10)+')'})
+          .attr("fill", "#f00")
+          .attr("fill-opacity", function(d) {return hascq(d) ? 1 : 0})
 
         chart.selectAll("line.stem")
           .data(data)
@@ -321,8 +348,8 @@
           .on('dblclick', function(d,i) {dblclick(d,i)})
           .on('contextmenu', function(d,i) {rclick(d,i)})
           .attr("class", "stem")
-          .attr("x1", function(d) { return x(new Date(d.time).getTime()) + 0.25 * (width - margin.left - margin.right)/ data.length})
-          .attr("x2", function(d) { return x(new Date(d.time).getTime()) + 0.25 * (width - margin.left - margin.right)/ data.length})        
+          .attr("x1", function(d) { return x(d.time) + 0.25 * (width - margin.left - margin.right)/ data.length})
+          .attr("x2", function(d) { return x(d.time) + 0.25 * (width - margin.left - margin.right)/ data.length})        
           .attr("y1", function(d) { return y(d.high)})
           .attr("y2", function(d) { return y(d.low)})
           .attr("stroke", function(d){ return d.open > d.close ? sfill : bfill})
@@ -390,6 +417,7 @@
             .tickValues(d3.scale.linear().domain(y2.domain()).ticks(5)))
         }
 
+function main(){
 	var requests = [];
 	for(var y=getIpo(); y<=new Date().getFullYear(); y++)
 		requests.push($.ajax({url: "https://img1.money.126.net/data/hs/kline/day/history/"+y+"/"+getId()+".json",dataType: "jsonp"}));
@@ -415,6 +443,15 @@
 		d3.select('#save').attr("download", id+".txt")
 		d3.select("#loading").style("display", "none")
 	});
+	if (!params.hasOwnProperty('id')) return;
+    $.getJSON("hfsp.json", function(res){
+		for(var j in res){
+			if (res[j].Code == params["id"])
+				cq.push({"date":parseDate(res[j].CQCXR), "plan":res[j].AllocationPlan})
+		}
+    });
+}
+	main()
     </script>
   </body>
 </html>
