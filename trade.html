@@ -199,6 +199,9 @@
 		}
 		return undefined
 	}
+	function addcq(d) {
+		if(d) cq.push(d)
+	}
 	function hascq(d) {
 		return findcq(d) != undefined
 	}
@@ -448,7 +451,7 @@ function main(){
     $.getJSON("hfsp.json", function(res){
 		for(var j in res){
 			if (res[j].Code == params["id"])
-				cq.push({"date":parseDate(res[j].CQCXR), "plan":"每股收益:"+res[j].EarningsPerShare+"<br>同比增长:"+res[j].JLYTBZZ+"%<br>"+res[j].AllocationPlan})
+				addcq({"date":parseDate(res[j].CQCXR), "plan":"每股收益:"+res[j].EarningsPerShare+"<br>同比增长:"+res[j].JLYTBZZ+"%<br>"+res[j].AllocationPlan})
 		}
     });
 }
