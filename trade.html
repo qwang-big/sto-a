@@ -118,6 +118,7 @@
 		return ""+d.getFullYear()+(m<10?"0"+m:m)+(dd<10?"0"+dd:dd)
 	}
       function parseDate(str) {
+		  if (str.length < 8) return undefined;
 		  if(str.indexOf("-")>0)
 			  return new Date(parseInt(str.substr(0,4)), parseInt(str.substr(5,2))-1, parseInt(str.substr(8,2)));
 		return new Date(parseInt(str.substr(0,4)), parseInt(str.substr(4,2))-1, parseInt(str.substr(6,2)))
